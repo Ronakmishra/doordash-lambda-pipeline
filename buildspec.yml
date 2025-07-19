@@ -5,44 +5,27 @@ phases:
     runtime-versions:
       python: 3.11
     commands:
-      - echo "========== INSTALL PHASE START =========="
-      - echo "Installing Python dependencies from requirements.txt to 'lib' folder"
-      - pip install -r requirements.txt -t lib
-      - echo "✅ Dependencies installed"
-      - echo "========== INSTALL PHASE END =========="
+      - echo "Installing dependencies..."
+      - pip install -r requirements.txt -t lib # installs into /lib for zipping later
 
   build:
     commands:
-      - echo "========== BUILD PHASE START =========="
-      - echo "Zipping dependencies inside 'lib'..."
-      - cd lib
-      - zip -r9 ../lambda.zip .
-      - echo "✅ Dependencies zipped to lambda.zip"
-      - cd ..
-      - echo "Adding 'app.py' to lambda.zip"
-      - zip -g lambda.zip app.py
-      - echo "✅ app.py added"
-      - echo "Adding .env to lambda.zip (if needed)"
-      - zip -g lambda.zip .env || echo "⚠️ .env not found or skipped"
-      - echo "========== BUILD PHASE END =========="
+      - echo "Zipping deployment package..."
+      - cd lib # enter lib dir with dependencies
+      - zip -r9 ../deployment_package.zip . # zip the lib contents into root zip
+      - cd .. # go back to root
+      - zip -g deployment_package.zip app.py # add Lambda handler code
+      - zip -g deployment_package.zip .env # add .env if needed
+      # Optional: uncomment next line if including input data
+      # - zip -g deployment_package.zip data/doordash_input.json
 
   post_build:
     commands:
-      - echo "========== POST-BUILD PHASE START =========="
-      - echo "Uploading lambda.zip to S3 bucket: class3-assign-lambda-deploymentfiles"
-      - aws s3 cp lambda.zip s3://class3-assign-lambda-deploymentfiles/ || echo "❌ Upload to S3 failed"
-      - echo "✅ lambda.zip uploaded to S3"
-
-      - echo "Uploading input JSON file to landing bucket: class3-assigno-doordash-landing-zn"
-      - aws s3 cp data/doordash_input.json s3://class3-assigno-doordash-landing-zn/ || echo "❌ Upload of JSON failed"
-      - echo "✅ JSON uploaded to landing bucket"
-
-      - echo "Updating Lambda function 'class3-assign-doordash-lambda' from new zip in S3"
+      - echo "Uploading to S3..."
+      - aws s3 cp deployment_package.zip s3://class3-assign-lambda-deploymentfiles/lambda.zip
+      - echo "Updating Lambda function via S3..."
       - aws lambda update-function-code \
         --function-name class3-assign-doordash-lambda \
         --s3-bucket class3-assign-lambda-deploymentfiles \
-        --s3-key lambda.zip \
-        --region us-east-1 || echo "❌ Lambda update failed"
-      - echo "✅ Lambda function code updated"
-
-      - echo "========== POST-BUILD PHASE END =========="
+        --s3-key lambda.zip
+      - echo "✅ Deployment complete!"
