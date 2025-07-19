@@ -18,23 +18,19 @@ phases:
       - echo "Uploading zip to S3"
       - aws s3 cp lambda.zip s3://class3-assign-lambda-deploymentfiles/lambda.zip
 
-  post_build:
-    commands:
-      - echo "Updating Lambda function code"
-      - aws lambda update-function-code \
-        --function-name class3-assign-doordash-lambda \
-        --s3-bucket class3-assign-lambda-deploymentfiles \
-        --s3-key lambda.zip
+post_build:
+  commands:
+    - echo "Updating Lambda function code"
+    - aws lambda update-function-code --function-name class3-assign-doordash-lambda --s3-bucket class3-assign-lambda-deploymentfiles --s3-key lambda.zip
 
-      # This line fails if file not found — we fix it below
-      - echo "Uploading input file to landing bucket"
-      - |
-        if [ -f data/doordash_input.json ]; then
-          aws s3 cp data/doordash_input.json s3://class3-assigno-doordash-landing-zn/doordash_input.json
-        else
-          echo "❌ File not found: data/doordash_input.json"
-          exit 1
-        fi
+    - echo "Uploading input file to landing bucket"
+    - |
+      if [ -f data/doordash_input.json ]; then
+        aws s3 cp data/doordash_input.json s3://class3-assigno-doordash-landing-zn/doordash_input.json
+      else
+        echo "❌ File not found: data/doordash_input.json"
+        exit 1
+      fi
 
 artifacts:
   files:
