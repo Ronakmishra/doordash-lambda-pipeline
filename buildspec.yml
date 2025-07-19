@@ -5,6 +5,11 @@ phases:
     runtime-versions:
       python: 3.11
     commands:
+      - echo "=== Starting INSTALL phase ==="
+      - echo "Current working directory: $(pwd)"
+      - echo "Listing project files:"
+      - ls -R
+      - echo "Installing dependencies..."
       - pip install -r requirements.txt -t package
       - cp app.py package/
       - cd package
@@ -12,10 +17,12 @@ phases:
 
   build:
     commands:
+      - echo "=== Starting BUILD phase ==="
       - echo "Build completed."
 
   post_build:
     commands:
+      - echo "=== Starting POST_BUILD phase ==="
       - echo "Uploading lambda code to S3..."
       - aws s3 cp ../lambda.zip s3://class3-assign-lambda-deploymentfiles/lambda.zip
 
