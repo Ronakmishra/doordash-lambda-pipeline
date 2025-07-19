@@ -5,27 +5,33 @@ phases:
     runtime-versions:
       python: 3.11
     commands:
+      # Install dependencies to a temp package folder
       - echo "Installing dependencies..."
-      - pip install -r requirements.txt -t lib # installs into /lib for zipping later
+      - pip install -r requirements.txt -t package
+      # Copy the Lambda function into the package
+      - cp app.py package/
+      # Move into the package directory and zip everything
+      - cd package
+      - zip -r ../lambda.zip .
 
   build:
     commands:
-      - echo "Zipping deployment package..."
-      - cd lib # enter lib dir with dependencies
-      - zip -r9 ../deployment_package.zip . # zip the lib contents into root zip
-      - cd .. # go back to root
-      - zip -g deployment_package.zip app.py # add Lambda handler code
-      - zip -g deployment_package.zip .env # add .env if needed
-      # Optional: uncomment next line if including input data
-      # - zip -g deployment_package.zip data/doordash_input.json
+      - echo "Build completed. Lambda package ready."
 
   post_build:
     commands:
-      - echo "Uploading to S3..."
-      - aws s3 cp deployment_package.zip s3://class3-assign-lambda-deploymentfiles/lambda.zip
-      - echo "Updating Lambda function via S3..."
-      - aws lambda update-function-code \
-        --function-name class3-assign-doordash-lambda \
-        --s3-bucket class3-assign-lambda-deploymentfiles \
-        --s3-key lambda.zip
-      - echo "✅ Deployment complete!"
+      - echo "Uploading lambda code to S3..."
+      - aws s3 cp ../lambda.zip s3://class3-assign-lambda-deploymentfiles/lambda.zip
+
+      - echo "Updating Lambda function from S3 zip..."
+      - |
+        aws lambda update-function-code \
+          --function-name class3-assign-doordash-lambda \
+          --s3-bucket class3-assign-lambda-deploymentfiles \
+          --s3-key lambda.zip
+
+      - echo "Waiting for Lambda to update before uploading input file..."
+      - sleep 10
+
+      - echo "Uploading sample JSON file to landing bucket..."
+      - aws s3 cp data/doordash_input.json s3://class3-assigno-doordash-landing-zn/doordash_input.json
