@@ -19,7 +19,7 @@ def lambda_handler(event, context):
         # 2. Read the file content
         obj = s3.get_object(Bucket=bucket_name, Key=key)
         data = obj['Body'].read().decode('utf-8')
-        json_data = json.loads(data)
+        json_data = [json.loads(line) for line in data.strip().splitlines()]
 
         # 3. Convert to DataFrame
         df = pd.DataFrame(json_data)
