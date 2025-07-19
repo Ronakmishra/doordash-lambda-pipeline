@@ -14,19 +14,16 @@ phases:
     commands:
       - echo "Build completed."
 
-  post_build:
-    commands:
-      - echo "Uploading lambda code to S3..."
-      - aws s3 cp ../lambda.zip s3://class3-assign-lambda-deploymentfiles/lambda.zip
+post_build:
+  commands:
+    - echo "Uploading lambda code to S3..."
+    - aws s3 cp ../lambda.zip s3://class3-assign-lambda-deploymentfiles/lambda.zip
 
-      - echo "Updating Lambda function..."
-      - aws lambda update-function-code \
-        --function-name class3-assign-doordash-lambda \
-        --s3-bucket class3-assign-lambda-deploymentfiles \
-        --s3-key lambda.zip
+    - echo "Updating Lambda function..."
+    - aws lambda update-function-code --function-name class3-assign-doordash-lambda --s3-bucket class3-assign-lambda-deploymentfiles --s3-key lambda.zip
 
-      - echo "Waiting 10 seconds for Lambda update to complete..."
-      - sleep 10
+    - echo "Waiting 10 seconds for Lambda update to complete..."
+    - sleep 10
 
-      - echo "Uploading sample JSON file to landing bucket..."
-      - aws s3 cp data/doordash_input.json s3://class3-assigno-doordash-landing-zn/doordash_input.json
+    - echo "Uploading sample JSON file to landing bucket..."
+    - aws s3 cp data/doordash_input.json s3://class3-assigno-doordash-landing-zn/doordash_input.json
