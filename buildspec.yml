@@ -5,33 +5,37 @@ phases:
     runtime-versions:
       python: 3.11
     commands:
-      # Install dependencies to a temp package folder
-      - echo "Installing dependencies..."
-      - pip install -r requirements.txt -t package
-      # Copy the Lambda function into the package
-      - cp app.py package/
-      # Move into the package directory and zip everything
-      - cd package
-      - zip -r ../lambda.zip .
+      - echo "Installing dependencies"
+      - pip install -r requirements.txt -t .
+
+  pre_build:
+    commands:
+      - echo "Zipping source code"
+      - zip -r lambda.zip app.py pandas* boto3* *.dist-info
 
   build:
     commands:
-      - echo "Build completed. Lambda package ready."
+      - echo "Uploading zip to S3"
+      - aws s3 cp lambda.zip s3://class3-assign-lambda-deploymentfiles/lambda.zip
 
   post_build:
     commands:
-      - echo "Uploading lambda code to S3..."
-      - aws s3 cp ../lambda.zip s3://class3-assign-lambda-deploymentfiles/lambda.zip
+      - echo "Updating Lambda function code"
+      - aws lambda update-function-code \
+        --function-name class3-assign-doordash-lambda \
+        --s3-bucket class3-assign-lambda-deploymentfiles \
+        --s3-key lambda.zip
 
-      - echo "Updating Lambda function from S3 zip..."
+      # This line fails if file not found — we fix it below
+      - echo "Uploading input file to landing bucket"
       - |
-        aws lambda update-function-code \
-          --function-name class3-assign-doordash-lambda \
-          --s3-bucket class3-assign-lambda-deploymentfiles \
-          --s3-key lambda.zip
+        if [ -f data/doordash_input.json ]; then
+          aws s3 cp data/doordash_input.json s3://class3-assigno-doordash-landing-zn/doordash_input.json
+        else
+          echo "❌ File not found: data/doordash_input.json"
+          exit 1
+        fi
 
-      - echo "Waiting for Lambda to update before uploading input file..."
-      - sleep 10
-
-      - echo "Uploading sample JSON file to landing bucket..."
-      - aws s3 cp data/doordash_input.json s3://class3-assigno-doordash-landing-zn/doordash_input.json
+artifacts:
+  files:
+    - lambda.zip
