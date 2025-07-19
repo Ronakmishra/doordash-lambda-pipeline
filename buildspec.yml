@@ -5,40 +5,24 @@ phases:
     runtime-versions:
       python: 3.11
     commands:
-      # Install Python dependencies into 'lib' folder
-      - echo Installing dependencies...
-      - pip install -r requirements.txt -t lib
+      - echo "Installing dependencies..."
+      - pip install -r requirements.txt -t .
 
   build:
     commands:
-      # Zip dependencies first
-      - echo Zipping dependencies...
-      - cd lib
-      - zip -r9 ../lambda.zip .
-      - cd ..
-
-      # Add function code and environment to same zip
-      - echo Adding function code...
-      - zip -g lambda.zip app.py
-      - zip -g lambda.zip .env
+      - echo "Zipping Lambda function and dependencies..."
+      - zip -r lambda.zip .
 
   post_build:
     commands:
-      # Upload zip to deployment S3 bucket
-      - echo Uploading Lambda package to S3...
+      - echo "Uploading lambda.zip to S3..."
       - aws s3 cp lambda.zip s3://class3-assign-lambda-deploymentfiles/lambda.zip
 
-      # Update the Lambda function with new zip
-      - echo Updating Lambda function code...
-      - aws lambda update-function-code \
-        --function-name class3-assign-doordash-lambda \
-        --s3-bucket class3-assign-lambda-deploymentfiles \
-        --s3-key lambda.zip
+      - echo "Updating Lambda function..."
+      - aws lambda update-function-code --function-name class3-assign-doordash-lambda --s3-bucket class3-assign-lambda-deploymentfiles --s3-key lambda.zip
 
-      # Wait for the Lambda function to fully deploy before triggering it
-      - echo Waiting 8 seconds to allow Lambda code to update...
+      - echo "Waiting for Lambda code update to take effect..."
       - sleep 8
 
-      # Upload input file to landing bucket (triggers Lambda)
-      - echo Uploading input JSON to landing bucket...
-      - aws s3 cp doordash_input.json s3://class3-assigno-doordash-landing-zn/doordash_input.json
+      - echo "Uploading trigger file to landing bucket..."
+      - aws s3 cp doordash_input.json s3://class3-assign-doordash-landing-zn/doordash_input.json
