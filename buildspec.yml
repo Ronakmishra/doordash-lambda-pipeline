@@ -25,4 +25,4 @@ phases:
       - sleep 8
 
       - echo "Uploading trigger file to landing bucket..."
-      - aws s3 cp doordash_input.json s3://class3-assign-doordash-landing-zn/doordash_input.json
+      - aws s3 cp doordash_input.json s3://class3-assigno-doordash-landing-zn/doordash_input.json
