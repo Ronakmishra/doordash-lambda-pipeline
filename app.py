@@ -8,7 +8,7 @@ s3 = boto3.client('s3')
 sns = boto3.client('sns')
 
 # SNS topic ARN
-SNS_TOPIC_ARN = '***REMOVED***'
+SNS_TOPIC_ARN = 'YOUR-SNS_TOPIC_ARN'
 
 def lambda_handler(event, context):
     try:
